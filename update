@@ -1,0 +1,113 @@
+#!/usr/bin/php
+<?php
+require 'Requests-1.6.0/library/Requests.php';
+Requests::register_autoloader();
+
+$args = $argv;
+$cmd = array_shift( $args );
+$type = 'all';
+$success = array();
+if ( !empty( $args[0] ) ) {
+	$type = $args[0];
+}
+
+switch ( $type ) {
+	case 'all':
+		$directory = 'themes';
+		$download = 'zips/%s.zip';
+		break;
+	default:
+		echo $cmd . ": invalid command\r\n";
+		echo 'Usage: php ' . $cmd . " [command]\r\n\r\n";
+		echo "Available commands:\r\n";
+		echo "  all - Downloads full plugin zips\r\n";
+		echo "  readme - Downloads plugin readmes only\r\n";
+		die();
+}
+
+echo "Determining most recent SVN revision...\r\n";
+try {
+	$changelog = @file_get_contents( 'http://themes.trac.wordpress.org/log/?format=changelog&stop_rev=HEAD' );
+	if ( !$changelog )
+		throw new Exception( 'Could not fetch the SVN changelog' );
+	preg_match( '#\[([0-9]+)\]#', $changelog, $matches );
+	if ( !$matches[1] )
+		throw new Exception( 'Could not determine most recent revision.' );
+} catch ( Exception $e ) {
+	die( $e->getMessage() . "\r\n" );
+}
+$svn_last_revision = (int) $matches[1];
+echo "Most recent SVN revision: " . $svn_last_revision . "\r\n";
+if ( file_exists( $directory . '/.last-revision' ) ) {
+	$last_revision = (int) file_get_contents( $directory . '/.last-revision' );
+	echo "Last synced revision: " . $last_revision . "\r\n";
+} else {
+	$last_revision = false;
+	echo "You have not yet performed a successful sync. Settle in. This will take a while.\r\n";
+}
+
+$start_time = time();
+
+if ( $last_revision != $svn_last_revision ) {
+	if ( $last_revision ) {
+		$changelog_url = sprintf( 'http://themes.trac.wordpress.org/log/?verbose=on&mode=follow_copy&format=changelog&rev=%d&limit=%d', $svn_last_revision, $svn_last_revision - $last_revision );
+		$changes = file_get_contents( $changelog_url );
+		preg_match_all( '#^' . "\t" . '*\* ([^/A-Z ]+)[ /].* \((added|modified|deleted|moved|copied)\)' . "\n" . '#m', $changes, $matches );
+		$plugins = array_unique( $matches[1] );
+	} else {
+		$themes = file_get_contents( 'http://themes.svn.wordpress.org/' );
+		preg_match_all( '#<li><a href="([^/]+)/">([^/]+)/</a></li>#', $themes, $matches );
+		$themes = $matches[1];
+	}
+
+	foreach ( $themes as $theme ) {
+		$theme = urldecode( $theme );
+		echo "Updating " . $theme . "\n";
+
+		$output = null; $return = null;
+		
+		$args = ( array(
+			'slug' 	 => $theme ,
+			'fields' => array('sections' => false, 'tags' => false)
+		) );
+		$action = 'theme_information';
+		$data = array(
+			'action' => $action,
+			'request' => serialize( $args )
+		);
+		$response = unserialize( Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), $data )->body ); 
+		if (false === $response ){
+			echo 'Unable to fetch ' . $theme . "\n";
+			continue;
+		}
+
+		exec( 'wget -q -np -O ' . escapeshellarg( sprintf($download, $theme) ) . ' ' . escapeshellarg( $response->download_link  ) . ' > /dev/null', $output, $return );
+
+		if ( $return === 0 && file_exists( sprintf($download, $theme) ) ) {
+			if ($type === 'all') {
+				if ( file_exists( 'themes/' . $theme ) )
+					exec( 'rm -rf ' . escapeshellarg( 'themes/' . $theme ) );
+
+				exec( 'unzip -o -d themes ' . escapeshellarg( 'zips/' . $theme . '.zip' ) );
+				exec( 'rm -rf ' . escapeshellarg( 'zips/' . $theme . '.zip' ) );
+			}
+			$success[] = $theme;
+		} else {
+			echo '... download failed.';
+		}
+		echo "\r\n";
+	}
+
+	if ( file_put_contents( $directory . '/.last-revision', $svn_last_revision ) )
+		echo "[CLEANUP] Updated $directory/.last-revision to " . $svn_last_revision . "\r\n";
+	else
+		echo "[ERROR] Could not update $directory/.last-revision to " . $svn_last_revision . "\r\n";
+}
+
+$end_time = time();
+$minutes = ( $end_time - $start_time ) / 60;
+$seconds = ( $end_time - $start_time ) % 60;
+
+echo "[SUCCESS] Done updating Themes!\r\n";
+echo "It took " . number_format( $minutes ) . " minute" . ( $minutes == 1 ? '' : 's' ) . " and " . $seconds . " second" . ( $seconds == 1 ? '' : 's' ) . " to update ". count( $success )  ." plugin" . ( count( $success ) == 1 ? '' : 's') . "\r\n";
+echo "[DONE]\r\n";
