@@ -109,5 +109,5 @@ $minutes = ( $end_time - $start_time ) / 60;
 $seconds = ( $end_time - $start_time ) % 60;
 
 echo "[SUCCESS] Done updating Themes!\r\n";
-echo "It took " . number_format( $minutes ) . " minute" . ( $minutes == 1 ? '' : 's' ) . " and " . $seconds . " second" . ( $seconds == 1 ? '' : 's' ) . " to update ". count( $success )  ." plugin" . ( count( $success ) == 1 ? '' : 's') . "\r\n";
+echo "It took " . number_format( $minutes ) . " minute" . ( $minutes == 1 ? '' : 's' ) . " and " . $seconds . " second" . ( $seconds == 1 ? '' : 's' ) . " to update ". count( $success )  ." theme" . ( count( $success ) == 1 ? '' : 's') . "\r\n";
 echo "[DONE]\r\n";
