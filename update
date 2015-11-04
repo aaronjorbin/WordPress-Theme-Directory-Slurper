@@ -27,7 +27,7 @@ switch ( $type ) {
 
 echo "Determining most recent SVN revision...\r\n";
 try {
-	$changelog = @file_get_contents( 'http://themes.trac.wordpress.org/log/?format=changelog&stop_rev=HEAD' );
+	$changelog = @file_get_contents( 'https://themes.trac.wordpress.org/log/?format=changelog&stop_rev=HEAD' );
 	if ( !$changelog )
 		throw new Exception( 'Could not fetch the SVN changelog' );
 	preg_match( '#\[([0-9]+)\]#', $changelog, $matches );
@@ -50,12 +50,12 @@ $start_time = time();
 
 if ( $last_revision != $svn_last_revision ) {
 	if ( $last_revision ) {
-		$changelog_url = sprintf( 'http://themes.trac.wordpress.org/log/?verbose=on&mode=follow_copy&format=changelog&rev=%d&limit=%d', $svn_last_revision, $svn_last_revision - $last_revision );
+		$changelog_url = sprintf( 'https://themes.trac.wordpress.org/log/?verbose=on&mode=follow_copy&format=changelog&rev=%d&limit=%d', $svn_last_revision, $svn_last_revision - $last_revision );
 		$changes = file_get_contents( $changelog_url );
 		preg_match_all( '#^' . "\t" . '*\* ([^/A-Z ]+)[ /].* \((added|modified|deleted|moved|copied)\)' . "\n" . '#m', $changes, $matches );
 		$plugins = array_unique( $matches[1] );
 	} else {
-		$themes = file_get_contents( 'http://themes.svn.wordpress.org/' );
+		$themes = file_get_contents( 'https://themes.svn.wordpress.org/' );
 		preg_match_all( '#<li><a href="([^/]+)/">([^/]+)/</a></li>#', $themes, $matches );
 		$themes = $matches[1];
 	}
@@ -65,7 +65,7 @@ if ( $last_revision != $svn_last_revision ) {
 		echo "Updating " . $theme . "\n";
 
 		$output = null; $return = null;
-		
+
 		$args = ( array(
 			'slug' 	 => $theme ,
 			'fields' => array('sections' => false, 'tags' => false)
@@ -75,7 +75,7 @@ if ( $last_revision != $svn_last_revision ) {
 			'action' => $action,
 			'request' => serialize( $args )
 		);
-		$response = unserialize( Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), $data )->body ); 
+		$response = unserialize( Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), $data )->body );
 		if (false === $response ){
 			echo 'Unable to fetch ' . $theme . "\n";
 			continue;
