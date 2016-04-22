@@ -73,9 +73,10 @@ if ( $last_revision != $svn_last_revision ) {
 		$action = 'theme_information';
 		$data = array(
 			'action' => $action,
-			'request' => serialize( $args )
+			'request' => serialize( (object) $args )
 		);
-		$response = unserialize( Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), $data )->body );
+		$r =  Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), (object) $data );
+		$response = unserialize( $r->body );
 		if (false === $response ){
 			echo 'Unable to fetch ' . $theme . "\n";
 			continue;
