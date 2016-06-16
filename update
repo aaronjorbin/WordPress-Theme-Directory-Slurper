@@ -54,7 +54,7 @@ if ( $last_revision != $svn_last_revision ) {
 		$changelog_url = sprintf( 'https://themes.trac.wordpress.org/log/?verbose=on&mode=follow_copy&format=changelog&rev=%d&limit=%d', $svn_last_revision, $svn_last_revision - $last_revision );
 		$changes = file_get_contents( $changelog_url );
 		preg_match_all( '#^' . "\t" . '*\* ([^/A-Z ]+)[ /].* \((added|modified|deleted|moved|copied)\)' . "\n" . '#m', $changes, $matches );
-		$plugins = array_unique( $matches[1] );
+		$themes = array_unique( $matches[1] );
 	} else {
 		$themes = file_get_contents( 'https://themes.svn.wordpress.org/' );
 		preg_match_all( '#<li><a href="([^/]+)/">([^/]+)/</a></li>#', $themes, $matches );
