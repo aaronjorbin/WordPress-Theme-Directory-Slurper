@@ -21,8 +21,7 @@ switch ( $type ) {
 		echo $cmd . ": invalid command\r\n";
 		echo 'Usage: php ' . $cmd . " [command]\r\n\r\n";
 		echo "Available commands:\r\n";
-		echo "  all - Downloads full plugin zips\r\n";
-		echo "  readme - Downloads plugin readmes only\r\n";
+		echo "  all - Downloads full theme zips\r\n";
 		die();
 }
 
