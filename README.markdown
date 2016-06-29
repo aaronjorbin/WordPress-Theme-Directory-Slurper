@@ -40,7 +40,7 @@ Your first update will take a while. You'd be well-advised to let it run overnig
 
 ### How much disk space do I need? ###
 
-As of early 2015, it takes up about 3.7GB.
+As of mid 2016, it takes up about 5.6GB.
 
 ### Something went wrong, how do I do a partial update? ###
 
