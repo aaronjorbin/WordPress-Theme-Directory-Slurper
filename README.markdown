@@ -15,6 +15,8 @@ Requirements
 * wget
 * Unix system (only tested on Mac OS X)
 
+A Windows compatible version of the script is available in [jrfnl/WordPress-Theme-Directory-Slurper](https://github.com/jrfnl/WordPress-Theme-Directory-Slurper).
+
 Instructions
 ------------
 
