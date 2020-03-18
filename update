@@ -1,7 +1,5 @@
 #!/usr/bin/php
 <?php
-require 'Requests-1.6.0/library/Requests.php';
-Requests::register_autoloader();
 
 $args = $argv;
 $cmd = array_shift( $args );
@@ -67,23 +65,45 @@ if ( $last_revision != $svn_last_revision ) {
 
 		$output = null; $return = null;
 
-		$args = ( array(
-			'slug' 	 => $theme ,
-			'fields' => array('sections' => false, 'tags' => false)
-		) );
-		$action = 'theme_information';
-		$data = array(
-			'action' => $action,
-			'request' => serialize( (object) $args )
+		$url = sprintf(
+			'https://api.wordpress.org/themes/info/1.1/?action=theme_information&request[slug]=%s',
+			$theme
 		);
-		$r =  Requests::post( 'https://api.wordpress.org/themes/info/1.0/', array(), (object) $data );
-		$response = unserialize( $r->body );
-		if (false === $response ){
+
+		$connection = curl_init();
+
+		curl_setopt($connection, CURLOPT_URL, $url);
+		curl_setopt($connection, CURLOPT_RETURNTRANSFER, true);
+
+		$theme_data_json = curl_exec($connection);
+
+		if (false === $theme_data_json) {
 			echo 'Unable to fetch ' . $theme . "\n";
 			continue;
 		}
 
-		exec( 'wget -q -np -O ' . escapeshellarg( sprintf($download, $theme) ) . ' ' . escapeshellarg( $response->download_link  ) . ' > /dev/null', $output, $return );
+		if ("false" === $theme_data_json) {
+			echo 'No data for ' . $theme . " theme\n";
+			continue;
+		}
+		curl_close($connection);
+
+		$theme_data = json_decode($theme_data_json);
+
+		if (false === $theme_data){
+			echo 'Not well formed JSON for ' . $theme . " theme\n";
+			continue;
+		}
+
+		exec(
+			'wget -q -np -O '
+			. escapeshellarg( sprintf($download, $theme) )
+			. ' '
+			. escapeshellarg( $theme_data->download_link  )
+			. ' > /dev/null',
+			$output,
+			$return
+		);
 
 		if ( $return === 0 && file_exists( sprintf($download, $theme) ) ) {
 			if ($type === 'all') {
